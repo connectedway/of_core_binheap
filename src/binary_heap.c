@@ -244,8 +244,6 @@ BLUE_VOID BlueHeapInitImpl (BLUE_VOID)
   size_t size ;
 #endif
 
-  binheap_lock = BlueLockInit () ;
-
   for (i = 0 ; i < BLUE_PARAM_HEAP_POWER + 1 ; i++)
     {
       binheap[i] = BLUE_NULL ;
@@ -274,6 +272,7 @@ BLUE_VOID BlueHeapInitImpl (BLUE_VOID)
     (1<<BLUE_PARAM_HEAP_POWER) - sizeof (struct binheap_chunk) ;
 #endif
   binheap_power_free (BLUE_PARAM_HEAP_POWER, chunk) ;
+  binheap_lock = BlueLockInit () ;
 }
 
 BLUE_VOID BlueHeapUnloadImpl (BLUE_VOID)

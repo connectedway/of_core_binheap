@@ -97,7 +97,7 @@ static BLUE_VOID binheap_power_free (BLUE_INT power,
   BLUE_INT bound ;
 #endif
 
-  binheap_lock = BlueLock () ;
+  binheap_lock = BlueLockInit () ;
 #if defined(BLUE_PARAM_HEAP_DEBUG)
   binheap_check_alloc (chunk) ;
   chunk->crumb = BLUE_FALSE ;

@@ -1,0 +1,1 @@
+set(BLUE_PARAM_HEAP_POWER "24" CACHE STRING "Size of heap (2^power)")

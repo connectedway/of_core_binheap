@@ -97,7 +97,7 @@ static BLUE_VOID binheap_power_free (BLUE_INT power,
   BLUE_INT bound ;
 #endif
 
-  BlueLock (&binheap_lock) ;
+  binheap_lock = BlueLock () ;
 #if defined(BLUE_PARAM_HEAP_DEBUG)
   binheap_check_alloc (chunk) ;
   chunk->crumb = BLUE_FALSE ;
@@ -111,7 +111,7 @@ static BLUE_VOID binheap_power_free (BLUE_INT power,
 
   chunk->u.next = binheap[power] ;
   binheap[power] = chunk ;
-  BlueUnlock (&binheap_lock) ;
+  BlueUnlock (binheap_lock) ;
 }
 
 static struct binheap_chunk * binheap_power_alloc (BLUE_INT power, 
@@ -132,12 +132,12 @@ static struct binheap_chunk * binheap_power_alloc (BLUE_INT power,
     power = POWER_LOW ;
   if (power < BLUE_PARAM_HEAP_POWER+1)
     {
-      BlueLock (&binheap_lock) ;
+      BlueLock (binheap_lock) ;
       if (binheap[power] != BLUE_NULL)
 	{
 	  chunk = binheap[power] ;
 	  binheap[power] = chunk->u.next ;
-	  BlueUnlock (&binheap_lock) ;
+	  BlueUnlock (binheap_lock) ;
 #if defined(BLUE_PARAM_HEAP_DEBUG)
 	  if (chunk->crumb)
 	    {
@@ -158,7 +158,7 @@ static struct binheap_chunk * binheap_power_alloc (BLUE_INT power,
 	}
       else
 	{
-	  BlueUnlock (&binheap_lock) ;
+	  BlueUnlock (binheap_lock) ;
 	  chunk = binheap_power_alloc (power + 1, alloc_size) ;
 	  if (chunk != BLUE_NULL)
 	    {
@@ -199,7 +199,7 @@ BLUE_VOID binheap_debug_check (BLUE_VOID)
   /*
    * All crumbs should be false
    */
-  BlueLock (&binheap_lock) ;
+  BlueLock (binheap_lock) ;
 
   for (i = 0 ; i < BLUE_PARAM_HEAP_POWER + 1 ; i++)
     {
@@ -229,7 +229,7 @@ BLUE_VOID binheap_debug_check (BLUE_VOID)
 	}
     }
 
-  BlueUnlock (&binheap_lock) ;
+  BlueUnlock (binheap_lock) ;
 }
 #endif
 
@@ -297,7 +297,7 @@ BLUE_VOID BlueHeapUnloadImpl (BLUE_VOID)
   munmap (heap, size);
   heap = NULL ;
 #endif
-  BlueLockDestroy (&binheap_lock) ;
+  BlueLockDestroy (binheap_lock) ;
 }
 
 BLUE_LPVOID BlueHeapMallocImpl (BLUE_SIZET size)

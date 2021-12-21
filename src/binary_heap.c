@@ -97,7 +97,7 @@ static BLUE_VOID binheap_power_free (BLUE_INT power,
   BLUE_INT bound ;
 #endif
 
-  binheap_lock = BlueLockInit () ;
+  BlueLock(binheap_lock);
 #if defined(BLUE_PARAM_HEAP_DEBUG)
   binheap_check_alloc (chunk) ;
   chunk->crumb = BLUE_FALSE ;
@@ -284,6 +284,9 @@ BLUE_VOID BlueHeapUnloadImpl (BLUE_VOID)
   size_t size ;
 #endif
 
+  BlueLockDestroy (binheap_lock) ;
+  binheap_lock = BLUE_NULL ;
+
 #if defined(_WINCE_)
   size = (1 << BLUE_PARAM_HEAP_POWER) ;
 
@@ -296,7 +299,6 @@ BLUE_VOID BlueHeapUnloadImpl (BLUE_VOID)
   munmap (heap, size);
   heap = NULL ;
 #endif
-  BlueLockDestroy (binheap_lock) ;
 }
 
 BLUE_LPVOID BlueHeapMallocImpl (BLUE_SIZET size)

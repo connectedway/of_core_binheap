@@ -1,13 +1,7 @@
-/* Copyright (c) 2009 Blue Peach Solutions, Inc.
- * All rights reserved.
- *
- * This software is protected by copyright and intellectual
- * property laws as well as international treaties.  It is to be
- * used and copied only by authorized licensees under the
- * conditions described in their licenses.
- *
- * Title to and ownership of the software shall at all times
- * remain with Blue Peach Solutions.
+/* Copyright (c) 2021 Connected Way, LLC. All rights reserved.
+ * Use of this source code is governed by a Creative Commons 
+ * Attribution-NoDerivatives 4.0 International license that can be
+ * found in the LICENSE file.
  */
 #if defined(_WINCE_)
 #include <windows.h>

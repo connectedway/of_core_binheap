@@ -51,7 +51,7 @@ static OFC_UINT32 heap[1 << (OFC_HEAP_POWER-2) ] ;
 #endif
 
 static struct binheap_chunk * binheap[OFC_HEAP_POWER+1] ;
-static BLUE_LOCK binheap_lock ;
+static OFC_LOCK binheap_lock ;
 
 static OFC_INT binheap_power_find (OFC_SIZET size)
 {
@@ -91,7 +91,7 @@ static OFC_VOID binheap_power_free (OFC_INT power,
   OFC_INT bound ;
 #endif
 
-  BlueLock(binheap_lock);
+  ofc_lock(binheap_lock);
 #if defined(OFC_HEAP_DEBUG)
   binheap_check_alloc (chunk) ;
   chunk->crumb = OFC_FALSE ;
@@ -105,7 +105,7 @@ static OFC_VOID binheap_power_free (OFC_INT power,
 
   chunk->u.next = binheap[power] ;
   binheap[power] = chunk ;
-  BlueUnlock (binheap_lock) ;
+  ofc_unlock (binheap_lock) ;
 }
 
 static struct binheap_chunk * binheap_power_alloc (OFC_INT power, 
@@ -126,12 +126,12 @@ static struct binheap_chunk * binheap_power_alloc (OFC_INT power,
     power = POWER_LOW ;
   if (power < OFC_HEAP_POWER+1)
     {
-      BlueLock (binheap_lock) ;
+      ofc_lock (binheap_lock) ;
       if (binheap[power] != OFC_NULL)
 	{
 	  chunk = binheap[power] ;
 	  binheap[power] = chunk->u.next ;
-	  BlueUnlock (binheap_lock) ;
+	  ofc_unlock (binheap_lock) ;
 #if defined(OFC_HEAP_DEBUG)
 	  if (chunk->crumb)
 	    {
@@ -152,7 +152,7 @@ static struct binheap_chunk * binheap_power_alloc (OFC_INT power,
 	}
       else
 	{
-	  BlueUnlock (binheap_lock) ;
+	  ofc_unlock (binheap_lock) ;
 	  chunk = binheap_power_alloc (power + 1, alloc_size) ;
 	  if (chunk != OFC_NULL)
 	    {
@@ -179,7 +179,7 @@ static struct binheap_chunk * binheap_power_alloc (OFC_INT power,
   else
     {
       chunk = OFC_NULL ;
-      BlueHeapDump() ;
+      ofc_heap_dump() ;
       BlueProcessCrash ("Heap Exhausted\n") ;
     }
   return (chunk) ;
@@ -193,7 +193,7 @@ OFC_VOID binheap_debug_check (OFC_VOID)
   /*
    * All crumbs should be false
    */
-  BlueLock (binheap_lock) ;
+  ofc_lock (binheap_lock) ;
 
   for (i = 0 ; i < OFC_HEAP_POWER + 1 ; i++)
     {
@@ -223,7 +223,7 @@ OFC_VOID binheap_debug_check (OFC_VOID)
 	}
     }
 
-  BlueUnlock (binheap_lock) ;
+  ofc_unlock (binheap_lock) ;
 }
 #endif
 
@@ -266,7 +266,7 @@ OFC_VOID BlueHeapInitImpl (OFC_VOID)
     (1<<OFC_HEAP_POWER) - sizeof (struct binheap_chunk) ;
 #endif
   binheap_power_free (OFC_HEAP_POWER, chunk) ;
-  binheap_lock = BlueLockInit () ;
+  binheap_lock = ofc_lock_init () ;
 }
 
 OFC_VOID BlueHeapUnloadImpl (OFC_VOID)
@@ -278,7 +278,7 @@ OFC_VOID BlueHeapUnloadImpl (OFC_VOID)
   size_t size ;
 #endif
 
-  BlueLockDestroy (binheap_lock) ;
+  ofc_lock_destroy (binheap_lock) ;
   binheap_lock = OFC_NULL ;
 
 #if defined(_WINCE_)
@@ -365,7 +365,7 @@ OFC_LPVOID BlueHeapReallocImpl (OFC_LPVOID ptr, OFC_SIZET size)
       if (power > chunk->u.power)
 	{
 	  newchunk = binheap_power_alloc (power, size) ;
-	  BlueCmemcpy (newchunk+1, chunk+1,
+	  ofc_memcpy (newchunk + 1, chunk + 1,
 		       (1<<chunk->u.power) - sizeof (struct binheap_chunk)) ;
 
 	  binheap_power_free (chunk->u.power, chunk) ;

@@ -23,49 +23,49 @@
 #include "ofh/config.h"
 
 #define POWER_LOW 0
-#define BLUE_HEAP_FENCE 0x52
+#define OFC_HEAP_FENCE 0x52
 
 struct binheap_chunk
 {
   union
   {
-    BLUE_INT power ;
+    OFC_INT power ;
     struct binheap_chunk * next ;
   } u ;
-#if defined(BLUE_PARAM_HEAP_DEBUG)
-  BLUE_BOOL crumb ;
-  BLUE_SIZET alloc_size ;
+#if defined(OFC_HEAP_DEBUG)
+  OFC_BOOL crumb ;
+  OFC_SIZET alloc_size ;
 #endif
 } ;
 
-static BLUE_VOID binheap_power_free (BLUE_INT power,
+static OFC_VOID binheap_power_free (OFC_INT power,
 				     struct binheap_chunk * chunk) ;
-static struct binheap_chunk * binheap_power_alloc (BLUE_INT power,
-						   BLUE_SIZET alloc_size) ;
-static BLUE_INT binheap_power_find (BLUE_SIZET size) ;
+static struct binheap_chunk * binheap_power_alloc (OFC_INT power,
+						   OFC_SIZET alloc_size) ;
+static OFC_INT binheap_power_find (OFC_SIZET size) ;
 
 #if defined(_WINCE_) || defined(__ANDROID__) || defined(ANDROID) || defined(__linux__) || defined(__APPLE__)
-static BLUE_UINT32 *heap ;
+static OFC_UINT32 *heap ;
 #else
-static BLUE_UINT32 heap[1 << (BLUE_PARAM_HEAP_POWER-2) ] ;
+static OFC_UINT32 heap[1 << (OFC_HEAP_POWER-2) ] ;
 #endif
 
-static struct binheap_chunk * binheap[BLUE_PARAM_HEAP_POWER+1] ;
+static struct binheap_chunk * binheap[OFC_HEAP_POWER+1] ;
 static BLUE_LOCK binheap_lock ;
 
-static BLUE_INT binheap_power_find (BLUE_SIZET size)
+static OFC_INT binheap_power_find (OFC_SIZET size)
 {
-  BLUE_INT i ;
+  OFC_INT i ;
 
   for (i = 0 ; size > 0 ; size = size >> 1, i++) ;
 
   return (i) ;
 }
 
-BLUE_VOID binheap_check_alloc (const struct binheap_chunk * chunk)
+OFC_VOID binheap_check_alloc (const struct binheap_chunk * chunk)
 {
-#if defined(BLUE_PARAM_HEAP_DEBUG)
-  BLUE_CCHAR *unused ;
+#if defined(OFC_HEAP_DEBUG)
+  OFC_CCHAR *unused ;
 
   if (!chunk->crumb)
     {
@@ -74,32 +74,32 @@ BLUE_VOID binheap_check_alloc (const struct binheap_chunk * chunk)
   /*
    * Let's check that it hasn't done a buffer overrun
    */
-  for (unused = (BLUE_CCHAR *) (chunk+1) + chunk->alloc_size ;
-       unused < (BLUE_CCHAR *) (chunk) + (1<<chunk->u.power) ;
+  for (unused = (OFC_CCHAR *) (chunk+1) + chunk->alloc_size ;
+       unused < (OFC_CCHAR *) (chunk) + (1<<chunk->u.power) ;
        unused++)
-    if (*unused != BLUE_HEAP_FENCE)
+    if (*unused != OFC_HEAP_FENCE)
       BlueProcessCrash ("Fence Intrusion Detected\n") ;
 #endif
 }
 
-static BLUE_VOID binheap_power_free (BLUE_INT power,
+static OFC_VOID binheap_power_free (OFC_INT power,
 				     struct binheap_chunk * chunk)
 {
-#if defined(BLUE_PARAM_HEAP_POISON)
-  BLUE_UINT32 *pmem ;
-  BLUE_INT i ;
-  BLUE_INT bound ;
+#if defined(OFC_HEAP_POISON)
+  OFC_UINT32 *pmem ;
+  OFC_INT i ;
+  OFC_INT bound ;
 #endif
 
   BlueLock(binheap_lock);
-#if defined(BLUE_PARAM_HEAP_DEBUG)
+#if defined(OFC_HEAP_DEBUG)
   binheap_check_alloc (chunk) ;
-  chunk->crumb = BLUE_FALSE ;
+  chunk->crumb = OFC_FALSE ;
 #endif
-#if defined(BLUE_PARAM_HEAP_POISON)
-  pmem = (BLUE_UINT32*) (chunk+1) ;
+#if defined(OFC_HEAP_POISON)
+  pmem = (OFC_UINT32*) (chunk+1) ;
   bound = (2^power) - sizeof(chunk) ;
-  for (i = 0 ; i < bound ; i+=sizeof(BLUE_UINT32))
+  for (i = 0 ; i < bound ; i+=sizeof(OFC_UINT32))
     *pmem++ = 0xFFFFFFFF ;
 #endif
 
@@ -108,45 +108,45 @@ static BLUE_VOID binheap_power_free (BLUE_INT power,
   BlueUnlock (binheap_lock) ;
 }
 
-static struct binheap_chunk * binheap_power_alloc (BLUE_INT power, 
-						   BLUE_SIZET alloc_size)
+static struct binheap_chunk * binheap_power_alloc (OFC_INT power, 
+						   OFC_SIZET alloc_size)
 {
   struct binheap_chunk * chunk ;
   struct binheap_chunk * next_chunk ;
-#if defined(BLUE_PARAM_HEAP_POISON)
-  BLUE_UINT32 *pmem ;
-  BLUE_INT i ;
-  BLUE_INT bound ;
+#if defined(OFC_HEAP_POISON)
+  OFC_UINT32 *pmem ;
+  OFC_INT i ;
+  OFC_INT bound ;
 #endif
-#if defined(BLUE_PARAM_HEAP_DEBUG)
-  BLUE_CHAR *unused ;
+#if defined(OFC_HEAP_DEBUG)
+  OFC_CHAR *unused ;
 #endif
 
   if (power < POWER_LOW)
     power = POWER_LOW ;
-  if (power < BLUE_PARAM_HEAP_POWER+1)
+  if (power < OFC_HEAP_POWER+1)
     {
       BlueLock (binheap_lock) ;
-      if (binheap[power] != BLUE_NULL)
+      if (binheap[power] != OFC_NULL)
 	{
 	  chunk = binheap[power] ;
 	  binheap[power] = chunk->u.next ;
 	  BlueUnlock (binheap_lock) ;
-#if defined(BLUE_PARAM_HEAP_DEBUG)
+#if defined(OFC_HEAP_DEBUG)
 	  if (chunk->crumb)
 	    {
 	      BlueProcessCrash ("Allocated something with a crumb\n") ;
 	    }
-	  chunk->crumb = BLUE_TRUE ;
+	  chunk->crumb = OFC_TRUE ;
 	  chunk->alloc_size = alloc_size ;
 
 	  /*
 	   * Let's Make a Fence
 	   */
-	  for (unused = (BLUE_CHAR *) (chunk+1) + chunk->alloc_size ;
-	       unused < (BLUE_CHAR *) (chunk) + (1<<power) ;
+	  for (unused = (OFC_CHAR *) (chunk+1) + chunk->alloc_size ;
+	       unused < (OFC_CHAR *) (chunk) + (1<<power) ;
 	       unused++)
-	    *unused = BLUE_HEAP_FENCE ;
+	    *unused = OFC_HEAP_FENCE ;
 #endif
 	  chunk->u.power = power ;
 	}
@@ -154,14 +154,14 @@ static struct binheap_chunk * binheap_power_alloc (BLUE_INT power,
 	{
 	  BlueUnlock (binheap_lock) ;
 	  chunk = binheap_power_alloc (power + 1, alloc_size) ;
-	  if (chunk != BLUE_NULL)
+	  if (chunk != OFC_NULL)
 	    {
 	      next_chunk = (struct binheap_chunk *) 
-		((BLUE_CHAR *)chunk + (1<<power)) ;
+		((OFC_CHAR *)chunk + (1<<power)) ;
 	      chunk->u.power = power ;
 	      next_chunk->u.power = power ;
-#if defined(BLUE_PARAM_HEAP_DEBUG)
-	      next_chunk->crumb = BLUE_TRUE ;
+#if defined(OFC_HEAP_DEBUG)
+	      next_chunk->crumb = OFC_TRUE ;
 	      next_chunk->alloc_size = 
 		(1<<power) - sizeof (struct binheap_chunk) ;
 #endif
@@ -169,57 +169,57 @@ static struct binheap_chunk * binheap_power_alloc (BLUE_INT power,
 	    }
 	  
 	}
-#if defined(BLUE_PARAM_HEAP_POISON)
-      pmem = (BLUE_UINT32*) (chunk+1) ;
+#if defined(OFC_HEAP_POISON)
+      pmem = (OFC_UINT32*) (chunk+1) ;
       bound = (2^power) - sizeof(chunk) ;
-      for (i = 0 ; i < bound ; i+=sizeof(BLUE_UINT32))
+      for (i = 0 ; i < bound ; i+=sizeof(OFC_UINT32))
 	*pmem++ = 0xFFFFFFFF ;
 #endif
     }
   else
     {
-      chunk = BLUE_NULL ;
+      chunk = OFC_NULL ;
       BlueHeapDump() ;
       BlueProcessCrash ("Heap Exhausted\n") ;
     }
   return (chunk) ;
 }
 
-#if defined(BLUE_PARAM_HEAP_CHECK)
-BLUE_VOID binheap_debug_check (BLUE_VOID)
+#if defined(OFC_HEAP_CHECK)
+OFC_VOID binheap_debug_check (OFC_VOID)
 {
   struct binheap_chunk *chunk ;
-  BLUE_INT i ;
+  OFC_INT i ;
   /*
    * All crumbs should be false
    */
   BlueLock (binheap_lock) ;
 
-  for (i = 0 ; i < BLUE_PARAM_HEAP_POWER + 1 ; i++)
+  for (i = 0 ; i < OFC_HEAP_POWER + 1 ; i++)
     {
-      for (chunk = binheap[i] ; chunk != BLUE_NULL; chunk = chunk->u.next)
+      for (chunk = binheap[i] ; chunk != OFC_NULL; chunk = chunk->u.next)
 	{
 	  if (chunk->crumb)
 	    {
 	      BlueProcessCrash ("Found a crumb in binary heap\n") ;
 	    }
 	  else
-	    chunk->crumb = BLUE_TRUE ;
+	    chunk->crumb = OFC_TRUE ;
 	}
     }
   /*
    * Reset the crumbs
    */
-  for (i = 0 ; i < BLUE_PARAM_HEAP_POWER + 1 ; i++)
+  for (i = 0 ; i < OFC_HEAP_POWER + 1 ; i++)
     {
-      for (chunk = binheap[i] ; chunk != BLUE_NULL; chunk = chunk->u.next)
+      for (chunk = binheap[i] ; chunk != OFC_NULL; chunk = chunk->u.next)
 	{
 	  if (!chunk->crumb)
 	    {
 	      BlueProcessCrash ("Found a crumb\n") ;
 	    }
 	  else
-	    chunk->crumb = BLUE_FALSE ;
+	    chunk->crumb = OFC_FALSE ;
 	}
     }
 
@@ -227,10 +227,10 @@ BLUE_VOID binheap_debug_check (BLUE_VOID)
 }
 #endif
 
-BLUE_VOID BlueHeapInitImpl (BLUE_VOID)
+OFC_VOID BlueHeapInitImpl (OFC_VOID)
 {
   struct binheap_chunk * chunk ;
-  BLUE_INT i ;
+  OFC_INT i ;
 #if defined(_WINCE_) 
   DWORD size ;
 #endif
@@ -238,38 +238,38 @@ BLUE_VOID BlueHeapInitImpl (BLUE_VOID)
   size_t size ;
 #endif
 
-  for (i = 0 ; i < BLUE_PARAM_HEAP_POWER + 1 ; i++)
+  for (i = 0 ; i < OFC_HEAP_POWER + 1 ; i++)
     {
-      binheap[i] = BLUE_NULL ;
+      binheap[i] = OFC_NULL ;
     }
 
 #if defined(_WINCE_)
-  size = (1 << BLUE_PARAM_HEAP_POWER) ;
+  size = (1 << OFC_HEAP_POWER) ;
 
-  heap = (BLUE_UINT32 *) VirtualAlloc (0, size, MEM_RESERVE, PAGE_NOACCESS);
-  heap = (BLUE_UINT32 *) VirtualAlloc (heap, size, MEM_COMMIT, PAGE_READWRITE);
-  chunk = (BLUE_VOID *) heap ;
+  heap = (OFC_UINT32 *) VirtualAlloc (0, size, MEM_RESERVE, PAGE_NOACCESS);
+  heap = (OFC_UINT32 *) VirtualAlloc (heap, size, MEM_COMMIT, PAGE_READWRITE);
+  chunk = (OFC_VOID *) heap ;
 #elif defined(__ANDROID__) || defined(ANDROID) || defined(__linux__) || defined(__APPLE__)
-  size = (1 << BLUE_PARAM_HEAP_POWER) ;
+  size = (1 << OFC_HEAP_POWER) ;
 
-  heap = (BLUE_UINT32 *) mmap(NULL, size, PROT_READ | PROT_WRITE,
+  heap = (OFC_UINT32 *) mmap(NULL, size, PROT_READ | PROT_WRITE,
 			      MAP_PRIVATE | MAP_ANONYMOUS,
 			      -1, 0) ;
-  chunk = (BLUE_VOID *) heap ;
+  chunk = (OFC_VOID *) heap ;
 #else
-  chunk = (BLUE_VOID *) heap ;
+  chunk = (OFC_VOID *) heap ;
 #endif
 
-#if defined(BLUE_PARAM_HEAP_DEBUG)
-  chunk->crumb = BLUE_TRUE ;
+#if defined(OFC_HEAP_DEBUG)
+  chunk->crumb = OFC_TRUE ;
   chunk->alloc_size = 
-    (1<<BLUE_PARAM_HEAP_POWER) - sizeof (struct binheap_chunk) ;
+    (1<<OFC_HEAP_POWER) - sizeof (struct binheap_chunk) ;
 #endif
-  binheap_power_free (BLUE_PARAM_HEAP_POWER, chunk) ;
+  binheap_power_free (OFC_HEAP_POWER, chunk) ;
   binheap_lock = BlueLockInit () ;
 }
 
-BLUE_VOID BlueHeapUnloadImpl (BLUE_VOID)
+OFC_VOID BlueHeapUnloadImpl (OFC_VOID)
 {
 #if defined(_WINCE_) 
   DWORD size ;
@@ -279,27 +279,27 @@ BLUE_VOID BlueHeapUnloadImpl (BLUE_VOID)
 #endif
 
   BlueLockDestroy (binheap_lock) ;
-  binheap_lock = BLUE_NULL ;
+  binheap_lock = OFC_NULL ;
 
 #if defined(_WINCE_)
-  size = (1 << BLUE_PARAM_HEAP_POWER) ;
+  size = (1 << OFC_HEAP_POWER) ;
 
   VirtualFree (heap, size, MEM_DECOMMIT);
   VirtualFree (0, size, MEM_RELEASE);
   heap = NULL ;
 #elif defined(__ANDROID__) || defined(ANDROID) || defined(__linux__) || defined(__APPLE__)
-  size = (1 << BLUE_PARAM_HEAP_POWER) ;
+  size = (1 << OFC_HEAP_POWER) ;
 
   munmap (heap, size);
   heap = NULL ;
 #endif
 }
 
-BLUE_LPVOID BlueHeapMallocImpl (BLUE_SIZET size)
+OFC_LPVOID BlueHeapMallocImpl (OFC_SIZET size)
 {
-  BLUE_INT power ;
+  OFC_INT power ;
   struct binheap_chunk * chunk ;
-  BLUE_LPVOID mem ;
+  OFC_LPVOID mem ;
 
   if (size > 100000)
     BlueProcessCrash ("Allocating something huge\n") ;
@@ -307,20 +307,20 @@ BLUE_LPVOID BlueHeapMallocImpl (BLUE_SIZET size)
   power = binheap_power_find (size + sizeof(struct binheap_chunk)) ;
   chunk = binheap_power_alloc (power, size) ;
 
-  mem = (BLUE_LPVOID) (++chunk) ;
+  mem = (OFC_LPVOID) (++chunk) ;
 
-#if defined(BLUE_PARAM_HEAP_CHECK)
+#if defined(OFC_HEAP_CHECK)
   binheap_debug_check() ;
 #endif
   return (mem) ;
 }
 
-BLUE_VOID BlueHeapCheckAllocImpl (BLUE_LPCVOID mem)
+OFC_VOID BlueHeapCheckAllocImpl (OFC_LPCVOID mem)
 {
-#if defined(BLUE_PARAM_HEAP_DEBUG)
+#if defined(OFC_HEAP_DEBUG)
   const struct binheap_chunk * chunk ;
 
-  if (mem != BLUE_NULL)
+  if (mem != OFC_NULL)
     {
       chunk = mem ;
       chunk-- ;
@@ -330,36 +330,36 @@ BLUE_VOID BlueHeapCheckAllocImpl (BLUE_LPCVOID mem)
 #endif
 }
 
-BLUE_VOID BlueHeapFreeImpl (BLUE_LPVOID mem)
+OFC_VOID BlueHeapFreeImpl (OFC_LPVOID mem)
 {
   struct binheap_chunk * chunk ;
 
-  if (mem != BLUE_NULL)
+  if (mem != OFC_NULL)
     {
       chunk = mem ;
       chunk-- ;
 
       binheap_power_free (chunk->u.power, chunk) ;
-#if defined(BLUE_PARAM_HEAP_CHECK)
+#if defined(OFC_HEAP_CHECK)
       binheap_debug_check() ;
 #endif
     }
 }
 
-BLUE_LPVOID BlueHeapReallocImpl (BLUE_LPVOID ptr, BLUE_SIZET size)
+OFC_LPVOID BlueHeapReallocImpl (OFC_LPVOID ptr, OFC_SIZET size)
 {
   struct binheap_chunk * chunk ;
   struct binheap_chunk * newchunk ;
-  BLUE_INT power ;
+  OFC_INT power ;
 
-#if defined(BLUE_PARAM_HEAP_CHECK)
+#if defined(OFC_HEAP_CHECK)
   binheap_debug_check() ;
 #endif
 
   chunk = ptr ;
   power = binheap_power_find (size + sizeof(struct binheap_chunk)) ;
 
-  if (chunk != BLUE_NULL)
+  if (chunk != OFC_NULL)
     {
       chunk-- ;
       if (power > chunk->u.power)
@@ -371,18 +371,18 @@ BLUE_LPVOID BlueHeapReallocImpl (BLUE_LPVOID ptr, BLUE_SIZET size)
 	  binheap_power_free (chunk->u.power, chunk) ;
 	  chunk = newchunk ;
 	}
-#if defined(BLUE_PARAM_HEAP_DEBUG)
+#if defined(OFC_HEAP_DEBUG)
       else
 	{
-	  BLUE_CHAR *unused ;
+	  OFC_CHAR *unused ;
 	  chunk->alloc_size = size ;
 	  /*
 	   * Let's Make a Fence
 	   */
-	  for (unused = (BLUE_CHAR *) (chunk + 1) + chunk->alloc_size ;
-	       unused < (BLUE_CHAR *) (chunk) + (1<<chunk->u.power) ;
+	  for (unused = (OFC_CHAR *) (chunk + 1) + chunk->alloc_size ;
+	       unused < (OFC_CHAR *) (chunk) + (1<<chunk->u.power) ;
 	       unused++)
-	    *unused = BLUE_HEAP_FENCE ;
+	    *unused = OFC_HEAP_FENCE ;
 	}
 #endif
     }
@@ -392,7 +392,7 @@ BLUE_LPVOID BlueHeapReallocImpl (BLUE_LPVOID ptr, BLUE_SIZET size)
     }
 
   chunk++ ;
-#if defined(BLUE_PARAM_HEAP_CHECK)
+#if defined(OFC_HEAP_CHECK)
   binheap_debug_check() ;
 #endif
   return (chunk) ;

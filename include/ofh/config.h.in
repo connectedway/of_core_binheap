@@ -3,6 +3,6 @@
  * Attribution-NoDerivatives 4.0 International license that can be
  * found in the LICENSE file.
  */
-#define BLUE_PARAM_HEAP_POWER @BLUE_PARAM_HEAP_POWER@
-#define BLUE_PARAM_HEAP_POISON @BLUE_PARAM_HEAP_POISON@
-#define BLUE_PARAM_HEAP_CHECK @BLUE_PARAM_HEAP_CHECK@
+#define OFC_HEAP_POWER @OFC_HEAP_POWER@
+#define OFC_HEAP_POISON @OFC_HEAP_POISON@
+#define OFC_HEAP_CHECK @OFC_HEAP_CHECK@

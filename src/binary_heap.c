@@ -69,7 +69,7 @@ OFC_VOID binheap_check_alloc (const struct binheap_chunk * chunk)
 
   if (!chunk->crumb)
     {
-      BlueProcessCrash ("Something Allocated without a crumb\n") ;
+      ofc_process_crash ("Something Allocated without a crumb\n") ;
     }
   /*
    * Let's check that it hasn't done a buffer overrun
@@ -78,7 +78,7 @@ OFC_VOID binheap_check_alloc (const struct binheap_chunk * chunk)
        unused < (OFC_CCHAR *) (chunk) + (1<<chunk->u.power) ;
        unused++)
     if (*unused != OFC_HEAP_FENCE)
-      BlueProcessCrash ("Fence Intrusion Detected\n") ;
+      ofc_process_crash ("Fence Intrusion Detected\n") ;
 #endif
 }
 
@@ -135,7 +135,7 @@ static struct binheap_chunk * binheap_power_alloc (OFC_INT power,
 #if defined(OFC_HEAP_DEBUG)
 	  if (chunk->crumb)
 	    {
-	      BlueProcessCrash ("Allocated something with a crumb\n") ;
+	      ofc_process_crash ("Allocated something with a crumb\n") ;
 	    }
 	  chunk->crumb = OFC_TRUE ;
 	  chunk->alloc_size = alloc_size ;
@@ -180,7 +180,7 @@ static struct binheap_chunk * binheap_power_alloc (OFC_INT power,
     {
       chunk = OFC_NULL ;
       ofc_heap_dump() ;
-      BlueProcessCrash ("Heap Exhausted\n") ;
+      ofc_process_crash ("Heap Exhausted\n") ;
     }
   return (chunk) ;
 }
@@ -201,7 +201,7 @@ OFC_VOID binheap_debug_check (OFC_VOID)
 	{
 	  if (chunk->crumb)
 	    {
-	      BlueProcessCrash ("Found a crumb in binary heap\n") ;
+	      ofc_process_crash ("Found a crumb in binary heap\n") ;
 	    }
 	  else
 	    chunk->crumb = OFC_TRUE ;
@@ -216,7 +216,7 @@ OFC_VOID binheap_debug_check (OFC_VOID)
 	{
 	  if (!chunk->crumb)
 	    {
-	      BlueProcessCrash ("Found a crumb\n") ;
+	      ofc_process_crash ("Found a crumb\n") ;
 	    }
 	  else
 	    chunk->crumb = OFC_FALSE ;
@@ -227,7 +227,7 @@ OFC_VOID binheap_debug_check (OFC_VOID)
 }
 #endif
 
-OFC_VOID BlueHeapInitImpl (OFC_VOID)
+OFC_VOID ofc_heap_init_impl (OFC_VOID)
 {
   struct binheap_chunk * chunk ;
   OFC_INT i ;
@@ -269,7 +269,7 @@ OFC_VOID BlueHeapInitImpl (OFC_VOID)
   binheap_lock = ofc_lock_init () ;
 }
 
-OFC_VOID BlueHeapUnloadImpl (OFC_VOID)
+OFC_VOID ofc_heap_unload_impl (OFC_VOID)
 {
 #if defined(_WINCE_) 
   DWORD size ;
@@ -295,14 +295,14 @@ OFC_VOID BlueHeapUnloadImpl (OFC_VOID)
 #endif
 }
 
-OFC_LPVOID BlueHeapMallocImpl (OFC_SIZET size)
+OFC_LPVOID ofc_malloc_impl (OFC_SIZET size)
 {
   OFC_INT power ;
   struct binheap_chunk * chunk ;
   OFC_LPVOID mem ;
 
   if (size > 100000)
-    BlueProcessCrash ("Allocating something huge\n") ;
+    ofc_process_crash ("Allocating something huge\n") ;
 
   power = binheap_power_find (size + sizeof(struct binheap_chunk)) ;
   chunk = binheap_power_alloc (power, size) ;
@@ -315,7 +315,7 @@ OFC_LPVOID BlueHeapMallocImpl (OFC_SIZET size)
   return (mem) ;
 }
 
-OFC_VOID BlueHeapCheckAllocImpl (OFC_LPCVOID mem)
+OFC_VOID ofc_heap_check_alloc_impl (OFC_LPCVOID mem)
 {
 #if defined(OFC_HEAP_DEBUG)
   const struct binheap_chunk * chunk ;
@@ -330,7 +330,7 @@ OFC_VOID BlueHeapCheckAllocImpl (OFC_LPCVOID mem)
 #endif
 }
 
-OFC_VOID BlueHeapFreeImpl (OFC_LPVOID mem)
+OFC_VOID ofc_free_impl (OFC_LPVOID mem)
 {
   struct binheap_chunk * chunk ;
 
@@ -346,7 +346,7 @@ OFC_VOID BlueHeapFreeImpl (OFC_LPVOID mem)
     }
 }
 
-OFC_LPVOID BlueHeapReallocImpl (OFC_LPVOID ptr, OFC_SIZET size)
+OFC_LPVOID ofc_realloc_impl (OFC_LPVOID ptr, OFC_SIZET size)
 {
   struct binheap_chunk * chunk ;
   struct binheap_chunk * newchunk ;

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21.1)
+cmake_minimum_required(VERSION 3.20.0)
 project(of_core_binheap VERSION 1.0.1 DESCRIPTION "OpenFiles Core Binary Heap")
 
 include(configs/default)

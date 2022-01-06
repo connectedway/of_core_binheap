@@ -256,9 +256,11 @@ OFC_VOID ofc_heap_unload_impl(OFC_VOID) {
 #if defined(__ANDROID__) || defined(ANDROID) || defined(__linux__) || defined(__APPLE__)
     size_t size;
 #endif
+    OFC_LOCK save;
 
-    ofc_lock_destroy(binheap_lock);
+    save = binheap_lock;
     binheap_lock = OFC_NULL;
+    ofc_lock_destroy(save);
 
 #if defined(_WINCE_)
     size = (1 << OFC_HEAP_POWER) ;

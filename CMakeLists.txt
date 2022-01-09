@@ -11,8 +11,5 @@ set(SRCS
         src/binary_heap.c
         )
 
-add_library(of_core_binheap STATIC ${SRCS})
-
-set_target_properties(of_core_binheap PROPERTIES VERSION ${PROJECT_VERSION})
-set_target_properties(of_core_binheap PROPERTIES SOVERSION 1)
-
+add_library(of_core_binheap OBJECT ${SRCS})
+set_property(TARGET of_core_binheap PROPERTY POSITION_INDEPENDENT_CODE ON)

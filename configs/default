@@ -1,3 +1,3 @@
-set(OFC_HEAP_POWER "24" CACHE STRING "Size of heap (2^power)")
+set(OFC_HEAP_POWER "25" CACHE STRING "Size of heap (2^power)")
 option(OFC_HEAP_POISON "Poison released blocks to trap on access" ON)
 option(OFC_HEAP_CHECK "Check heap consistency on every heap function" ON)

@@ -106,6 +106,67 @@ static OFC_VOID binheap_power_free(OFC_INT power,
     ofc_unlock(binheap_lock);
 }
 
+#if 0
+#if defined(__ANDROID__) || defined(ANDROID)
+#include <stdlib.h>
+#include <errno.h>
+
+static OFC_VOID print_library_address(OFC_CCHAR *library_name) 
+{ 
+  FILE* file ;
+  OFC_UINT addr = 0; 
+  OFC_INT len_libname ;
+  OFC_CHAR buff[256]; 
+
+  len_libname = ofc_strlen(library_name); 
+
+  file = fopen ("/proc/self/maps", "rt"); 
+
+  if (file != OFC_NULL) 
+    {
+      while (fgets(buff, sizeof buff, file) != NULL)
+	{ 
+	  // dump entire file (all lines)
+	  // but also search for libandroidsmb
+	  ofc_write_console(buff);
+	  OFC_INT len = ofc_strlen(buff); 
+
+	  if (len > 0 && buff[len-1] == '\n') 
+	    { 
+	      buff[--len] = '\0'; 
+	    } 
+
+	  if (len > len_libname &&
+	      ofc_memcmp(buff + len - len_libname,
+			 library_name, len_libname) == 0)
+	    {
+	      size_t start ;
+	      size_t end ;
+	      size_t offset; 
+	      OFC_CHAR flags[4]; 
+
+	      if (sscanf (buff, "%zx-%zx %c%c%c%c %zx", &start, &end, 
+			  &flags[0], &flags[1], &flags[2], &flags[3], 
+			  &offset ) == 7) 
+		{
+		  if (flags[0]=='r' && flags[1]=='-' && flags[2]=='x') 
+		    { 
+		      addr = (OFC_UINT) (start - offset); 
+		    } 
+		}
+	    }
+	} 
+    }
+
+  fclose (file); 
+
+  ofc_snprintf(buff, 256, "%s loaded at 0x%08x\n",
+	       library_name, addr);
+  ofc_write_console(buff);
+} 
+#endif
+#endif
+
 static struct binheap_chunk *binheap_power_alloc(OFC_INT power,
                                                  OFC_SIZET alloc_size) {
     struct binheap_chunk *chunk;
@@ -168,6 +229,10 @@ static struct binheap_chunk *binheap_power_alloc(OFC_INT power,
 #endif
     } else {
         chunk = OFC_NULL;
+#if 0
+	print_library_address("libof_smb_jni.so");
+	print_library_address("libof_core_jni.so");
+#endif
         ofc_heap_dump();
         ofc_process_crash("Heap Exhausted\n");
     }

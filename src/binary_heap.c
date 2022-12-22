@@ -239,7 +239,7 @@ static struct binheap_chunk *binheap_power_alloc(OFC_INT power,
     return (chunk);
 }
 
-#if defined(OFC_HEAP_CHECK)
+#if defined(OFC_HEAP_CHECK) && defined(OFC_HEAP_DEBUG)
 
 OFC_VOID binheap_debug_check(OFC_VOID) {
     struct binheap_chunk *chunk;
@@ -354,7 +354,7 @@ OFC_LPVOID ofc_malloc_impl(OFC_SIZET size) {
 
     mem = (OFC_LPVOID) (++chunk);
 
-#if defined(OFC_HEAP_CHECK)
+#if defined(OFC_HEAP_CHECK) && defined(OFC_HEAP_DEBUG)
     binheap_debug_check();
 #endif
     return (mem);
@@ -381,7 +381,7 @@ OFC_VOID ofc_free_impl(OFC_LPVOID mem) {
         chunk--;
 
         binheap_power_free(chunk->u.power, chunk);
-#if defined(OFC_HEAP_CHECK)
+#if defined(OFC_HEAP_CHECK) && defined(OFC_HEAP_DEBUG)
         binheap_debug_check();
 #endif
     }
@@ -392,7 +392,7 @@ OFC_LPVOID ofc_realloc_impl(OFC_LPVOID ptr, OFC_SIZET size) {
     struct binheap_chunk *newchunk;
     OFC_INT power;
 
-#if defined(OFC_HEAP_CHECK)
+#if defined(OFC_HEAP_CHECK) && defined(OFC_HEAP_DEBUG)
     binheap_debug_check();
 #endif
 
@@ -427,7 +427,7 @@ OFC_LPVOID ofc_realloc_impl(OFC_LPVOID ptr, OFC_SIZET size) {
     }
 
     chunk++;
-#if defined(OFC_HEAP_CHECK)
+#if defined(OFC_HEAP_CHECK) && defined(OFC_HEAP_DEBUG)
     binheap_debug_check();
 #endif
     return (chunk);

@@ -314,30 +314,31 @@ OFC_VOID ofc_heap_init_impl(OFC_VOID) {
     binheap_lock = ofc_lock_init();
 }
 
-OFC_VOID ofc_heap_unload_impl(OFC_VOID) {
+OFC_VOID ofc_heap_unload_impl(OFC_VOID)
+{
+  OFC_LOCK save;
+
+  save = binheap_lock;
+  binheap_lock = OFC_NULL;
+  ofc_lock_destroy(save);
+}
+
+OFC_VOID ofc_heap_unmap_impl(OFC_VOID)
+{
 #if defined(_WINCE_)
-    DWORD size ;
-#endif
-#if defined(__ANDROID__) || defined(ANDROID) || defined(__linux__) || defined(__APPLE__)
-    size_t size;
-#endif
-    OFC_LOCK save;
+  DWORD size ;
+  size = (1 << OFC_HEAP_POWER) ;
 
-    save = binheap_lock;
-    binheap_lock = OFC_NULL;
-    ofc_lock_destroy(save);
-
-#if defined(_WINCE_)
-    size = (1 << OFC_HEAP_POWER) ;
-
-    VirtualFree (heap, size, MEM_DECOMMIT);
-    VirtualFree (0, size, MEM_RELEASE);
-    heap = NULL ;
+  VirtualFree (heap, size, MEM_DECOMMIT);
+  VirtualFree (0, size, MEM_RELEASE);
+  heap = NULL ;
 #elif defined(__ANDROID__) || defined(ANDROID) || defined(__linux__) || defined(__APPLE__)
-    size = (1 << OFC_HEAP_POWER);
+  size_t size;
 
-    munmap(heap, size);
-    heap = NULL;
+  size = (1 << OFC_HEAP_POWER);
+
+  munmap(heap, size);
+  heap = NULL;
 #endif
 }
 

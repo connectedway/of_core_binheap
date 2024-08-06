@@ -347,7 +347,7 @@ OFC_LPVOID ofc_malloc_impl(OFC_SIZET size) {
     struct binheap_chunk *chunk;
     OFC_LPVOID mem;
 
-    if (size > 100000)
+    if (size > 300000)
         ofc_process_crash("Allocating something huge\n");
 
     power = binheap_power_find(size + sizeof(struct binheap_chunk));
